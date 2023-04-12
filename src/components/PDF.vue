@@ -22,17 +22,16 @@ export default {
       isVertical: false,
       width: 842,
       height: 595,
-      img: "",
       backEndPoint: {
         x: 0,
         y: 0,
-        isVertical:false,
+        vertical: false,
       },
     };
   },
   methods: {
     stamp() {
-      this.backEndPoint.isVertical = this.isVertical;
+      this.backEndPoint.vertical = this.isVertical;
       fetch("http://localhost:9000/stamp", {
         method: "post",
         headers: {
@@ -53,23 +52,21 @@ export default {
         });
     },
     stampTest(mouse) {
-      let r = 30;
+      let r = 50;
       //减3是因为设置了border为3px
       let x = Number(mouse.clientX) - 3;
       let y = Number(mouse.clientY) - 3;
       //防止xy的值为0
-      x = x < 0 ? 0 : x;
-      y = y < 0 ? 0 : y;
+/*       x = x < 0 ? 0 : x;
+      y = y < 0 ? 0 : y; */
       console.log("前端点击位置" + x + "," + y);
       //在itext中，坐标需要进行转换
-      this.backEndPoint.x = x + r * Math.cos((135 * Math.PI) / 180);
-      this.backEndPoint.y = y + r * Math.cos((135 * Math.PI) / 180);
-      this.backEndPoint.x = this.backEndPoint.x < 0 ? 0 : this.backEndPoint.x;
+      this.backEndPoint.x = x - r;
+      this.backEndPoint.y = y + r;
+
+/*       this.backEndPoint.x = this.backEndPoint.x < 0 ? 0 : this.backEndPoint.x;
       this.backEndPoint.y = this.backEndPoint.y < 0 ? 0 : this.backEndPoint.y;
-      //因w3c坐标系和itext坐标系不同，因此需要再次转换
-      this.backEndPoint.y = Math.abs(this.height - this.backEndPoint.y);
-      console.log("圆的左上坐标为：" + this.backEndPoint.x + "," + this.backEndPoint.y);
-      this.img = localStorage.getItem("img");
+ */
       //获取canvas实例
       const cnv = this.$refs.pdfcanvas;
       const cxt = cnv.getContext("2d");
@@ -78,20 +75,22 @@ export default {
       cxt.arc(x, y, r, 0, (360 * Math.PI) / 180);
       cxt.closePath();
       cxt.stroke();
+
+      //因w3c坐标系和itext坐标系不同，因此需要再次转换
+      this.backEndPoint.y = this.height - this.backEndPoint.y;
+      console.log("圆的左下坐标为：" + this.backEndPoint.x + "," + this.backEndPoint.y);
+
     },
     clear() {
       let url = "http://localhost:9000/";
-
       if (this.isVertical) {
         url = url + "vertical";
       } else {
         url = url + "thwartwise";
       }
-      console.log(url);
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
-          console.log(data);
           //填充图片
           const cnv = this.$refs.pdfcanvas;
           const cxt = cnv.getContext("2d");

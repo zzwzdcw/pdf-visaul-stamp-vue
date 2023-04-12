@@ -1,5 +1,6 @@
 <template>
   <div>
+  <h2>调用后端盖打</h2>
     <canvas
       v-bind:width="width"
       v-bind:height="height"
@@ -56,8 +57,8 @@ export default {
       //圆的半径，根据印章的大小来配置
       let r = 50;
       //减3是因为设置了border为3px
-      let x = Number(mouse.clientX) - 3;
-      let y = Number(mouse.clientY) - 3;
+      let x = Number(mouse.offsetX) - 3;
+      let y = Number(mouse.offsetY) - 3;
       console.log("前端点击位置" + x + "," + y);
       //在itext中，坐标需要进行转换
       this.backEndPoint.x = x - r;

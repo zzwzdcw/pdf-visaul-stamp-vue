@@ -10,24 +10,48 @@
     <br />
     <button @click="clear()">清 空</button>
     <button @click="change()">切 换</button>
+    <button @click="stamp()">盖 章</button>
   </div>
 </template>
 
 <script>
 export default {
-  name: "Pdf",
+  name: "PdfView",
   data() {
     return {
+      isVertical: false,
       width: 842,
       height: 595,
       img: "",
       backEndPoint: {
         x: 0,
         y: 0,
+        isVertical:false,
       },
     };
   },
   methods: {
+    stamp() {
+      this.backEndPoint.isVertical = this.isVertical;
+      fetch("http://localhost:9000/stamp", {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.backEndPoint),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          //填充图片
+          const cnv = this.$refs.pdfcanvas;
+          const cxt = cnv.getContext("2d");
+          const image = new Image();
+          image.src = data.data;
+          image.onload = () => {
+            cxt.drawImage(image, 0, 0);
+          };
+        });
+    },
     stampTest(mouse) {
       let r = 30;
       //减3是因为设置了border为3px
@@ -52,40 +76,48 @@ export default {
       //画圆模拟盖章
       cxt.beginPath();
       cxt.arc(x, y, r, 0, (360 * Math.PI) / 180);
-      cxt.arc(this.backEndPoint.x, this.backEndPoint.y, r, 0, (360 * Math.PI) / 180);
-
       cxt.closePath();
       cxt.stroke();
     },
     clear() {
-      //填充图片
-      this.img = localStorage.getItem("img");
-      const cnv = this.$refs.pdfcanvas;
-      const cxt = cnv.getContext("2d");
-      const image = new Image();
-      image.src = this.img;
-      image.onload = () => {
-        cxt.drawImage(image, 0, 0);
-      };
+      let url = "http://localhost:9000/";
+
+      if (this.isVertical) {
+        url = url + "vertical";
+      } else {
+        url = url + "thwartwise";
+      }
+      console.log(url);
+      fetch(url)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log(data);
+          //填充图片
+          const cnv = this.$refs.pdfcanvas;
+          const cxt = cnv.getContext("2d");
+          const image = new Image();
+          image.src = data.data;
+          image.onload = () => {
+            cxt.drawImage(image, 0, 0);
+          };
+        });
     },
     change() {
-      let temp = this.width;
-      this.width = this.height;
-      this.height = temp;
-      console.log("切换");
-      this.clear();
+      if (this.isVertical) {
+        this.width = 842;
+        this.height = 595;
+        this.isVertical = false;
+        this.clear();
+      } else {
+        this.width = 595;
+        this.height = 842;
+        this.isVertical = true;
+        this.clear();
+      }
     },
   },
   mounted() {
-    //填充图片
-    this.img = localStorage.getItem("img");
-    const cnv = this.$refs.pdfcanvas;
-    const cxt = cnv.getContext("2d");
-    const image = new Image();
-    image.src = this.img;
-    image.onload = () => {
-      cxt.drawImage(image, 0, 0);
-    };
+    this.clear();
   },
 };
 </script>

@@ -1,16 +1,16 @@
 <template>
   <div>
-    <Pdf/>
+    <PdfView/>
   </div>
 </template>
 
 <script>
-import Pdf from '@/components/PDF.vue';
+import PdfView from '@/components/PDF.vue';
 
 export default {
   name: 'App',
   components: {
-    Pdf
+    PdfView
   }
 }
 </script>

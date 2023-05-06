@@ -1,6 +1,6 @@
 <template>
   <div>
-  <h2>调用后端盖打</h2>
+    <h2>调用后端盖打</h2>
     <canvas
       v-bind:width="width"
       v-bind:height="height"
@@ -9,6 +9,8 @@
       @click="stampTest"
     ></canvas>
     <br />
+    <button @click="back()">上一页</button>
+    <button @click="next()">下一页</button>
     <button @click="clear()">清 空</button>
     <button @click="change()">切 换</button>
     <button @click="stamp()">盖 章</button>
@@ -20,18 +22,63 @@ export default {
   name: "PdfView",
   data() {
     return {
+      nowPage: 1,
+      PageTotal: 1,
+      pdfList: [{}],
+      pdfListBack: [{}],
       isVertical: false,
       width: 842,
       height: 595,
-      backEndPoint: {
-        pointVoList: [{}],
+      point: {
         x: 0,
         y: 0,
+      },
+      backEndPoint: {
+        pointVoList: [{}],
         vertical: false,
       },
     };
   },
   methods: {
+    //请求后端盖章的代码
+    back() {
+      if (this.nowPage > 1) {
+        this.getCanvasBase64();
+        this.nowPage = this.nowPage - 1;
+        this.fullCanvas();
+      } else {
+        alert("已经是第一页");
+      }
+    },
+    next() {
+      if (this.nowPage < this.pdfList.length) {
+        this.getCanvasBase64();
+        this.nowPage = this.nowPage + 1;
+        this.fullCanvas();
+      } else {
+        alert("已经是最后一页");
+      }
+    },
+    fullCanvas() {
+      //填充图片
+      const cnv = this.$refs.pdfcanvas;
+      const cxt = cnv.getContext("2d");
+      const image = new Image();
+      console.log(this.pdfList);
+      image.src = this.pdfList[this.nowPage - 1];
+      image.onload = () => {
+        cxt.drawImage(image, 0, 0);
+      };
+    },
+    getCanvasBase64() {
+      const cnv = this.$refs.pdfcanvas;
+      this.pdfList[this.nowPage - 1] = cnv.toDataURL("image/png");
+    },
+    clear() {
+      this.backEndPoint.pointVoList = [];
+      this.pdfList = JSON.parse(sessionStorage.getItem("pdfList"));
+      this.fullCanvas();
+    },
     stamp() {
       this.backEndPoint.vertical = this.isVertical;
       fetch("http://localhost:9000/stamp", {
@@ -44,25 +91,20 @@ export default {
         .then((response) => response.json())
         .then((data) => {
           //填充图片
-          const cnv = this.$refs.pdfcanvas;
-          const cxt = cnv.getContext("2d");
-          const image = new Image();
-          image.src = data.data;
-          image.onload = () => {
-            cxt.drawImage(image, 0, 0);
-          };
+          this.pdfList = data.data;
+          this.fullCanvas();
         });
     },
+    //模拟盖章
     stampTest(mouse) {
       //圆的半径，根据印章的大小来配置
       let r = 50;
       //减3是因为设置了border为3px
       let x = Number(mouse.offsetX) - 3;
       let y = Number(mouse.offsetY) - 3;
-      console.log("前端点击位置" + x + "," + y);
       //在itext中，坐标需要进行转换
-      this.backEndPoint.x = x - r;
-      this.backEndPoint.y = y + r;
+      this.point.x = x - r;
+      this.point.y = y + r;
       //获取canvas实例
       const cnv = this.$refs.pdfcanvas;
       const cxt = cnv.getContext("2d");
@@ -72,15 +114,17 @@ export default {
       cxt.closePath();
       cxt.stroke();
       //因w3c坐标系和itext坐标系不同，因此需要再次转换
-      this.backEndPoint.y = this.height - this.backEndPoint.y;
-      console.log("圆的左下坐标为：" + this.backEndPoint.x + "," + this.backEndPoint.y);
+      this.point.y = this.height - this.point.y;
+      console.log("圆的左下坐标为：" + this.point.x + "," + this.point.y);
       this.backEndPoint.pointVoList.push({
-        x: this.backEndPoint.x,
-        y: this.backEndPoint.y,
+        x: this.point.x,
+        y: this.point.y,
+        page: this.nowPage,
       });
     },
-    clear() {
-      this.backEndPoint.pointVoList=[];
+    //获取pdf
+    getPDf() {
+      this.backEndPoint.pointVoList = [];
       let url = "http://localhost:9000/";
       if (this.isVertical) {
         url = url + "vertical";
@@ -90,32 +134,28 @@ export default {
       fetch(url)
         .then((response) => response.json())
         .then((data) => {
-          //填充图片
-          const cnv = this.$refs.pdfcanvas;
-          const cxt = cnv.getContext("2d");
-          const image = new Image();
-          image.src = data.data;
-          image.onload = () => {
-            cxt.drawImage(image, 0, 0);
-          };
+          this.pdfList = data.data;
+          sessionStorage.setItem("pdfList", JSON.stringify(this.pdfList));
+          this.fullCanvas();
         });
     },
+    //切换长宽
     change() {
       if (this.isVertical) {
         this.width = 842;
         this.height = 595;
         this.isVertical = false;
-        this.clear();
+        this.getPDf();
       } else {
         this.width = 595;
         this.height = 842;
         this.isVertical = true;
-        this.clear();
+        this.getPDf();
       }
     },
   },
   mounted() {
-    this.clear();
+    this.getPDf();
   },
 };
 </script>

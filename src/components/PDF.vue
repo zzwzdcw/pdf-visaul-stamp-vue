@@ -81,8 +81,7 @@ export default {
       this.pdfList = JSON.parse(sessionStorage.getItem("pdfList"));
       this.fullCanvas();
     },
-    signTest(mouse){
-
+    signTest(mouse) {
       //圆的半径，根据印章的大小来配置
       let r = 50;
       //减3是因为设置了border为3px
@@ -108,7 +107,7 @@ export default {
         page: this.nowPage,
       });
     },
-    sign(){
+    sign() {
       this.backEndPoint.vertical = this.isVertical;
       fetch("http://localhost:9000/sign", {
         method: "post",
@@ -158,11 +157,11 @@ export default {
       const cxt = cnv.getContext("2d");
       //画长方形模拟签字
       cxt.beginPath();
-      cxt.moveTo(x1,y1);
-      cxt.lineTo(x2,y1);
-      cxt.lineTo(x2,y2);
-      cxt.lineTo(x1,y2);
-      cxt.lineTo(x1,y1);
+      cxt.moveTo(x1, y1);
+      cxt.lineTo(x2, y1);
+      cxt.lineTo(x2, y2);
+      cxt.lineTo(x1, y2);
+      cxt.lineTo(x1, y1);
       cxt.stroke();
       //因w3c坐标系和itext坐标系不同，因此需要再次转换
       this.point.y = this.height - this.point.y;

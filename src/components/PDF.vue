@@ -6,16 +6,16 @@
       v-bind:height="height"
       class="vertical"
       ref="pdfcanvas"
-      @click="stampTest"
+      @click="handleCanvasClick"
     ></canvas>
     <br />
+    <button @click="changePhotoOrWord()">{{ changePhotoOrWordLable }}</button>
     <button @click="back()">上一页</button>
     <button @click="next()">下一页</button>
     <button @click="clear()">清 空</button>
     <button @click="change()">切 换</button>
     <button @click="stamp()">盖 章</button>
     <button @click="sign()">签 字</button>
-
   </div>
 </template>
 
@@ -31,6 +31,8 @@ export default {
       isVertical: false,
       width: 842,
       height: 595,
+      isPhoto: true,
+      changePhotoOrWordLable: "切换成文字",
       point: {
         x: 0,
         y: 0,
@@ -42,6 +44,14 @@ export default {
     };
   },
   methods: {
+    changePhotoOrWord() {
+      this.isPhoto = !this.isPhoto;
+      if (this.isPhoto) {
+        this.changePhotoOrWordLable = "切换成文字";
+      } else {
+        this.changePhotoOrWordLable = "切换成图片";
+      }
+    },
     //请求后端盖章的代码
     back() {
       if (this.nowPage > 1) {
@@ -81,6 +91,7 @@ export default {
       this.pdfList = JSON.parse(sessionStorage.getItem("pdfList"));
       this.fullCanvas();
     },
+
     signTest(mouse) {
       //圆的半径，根据印章的大小来配置
       let r = 50;
@@ -201,6 +212,17 @@ export default {
         this.height = 842;
         this.isVertical = true;
         this.getPDf();
+      }
+    },
+    unionTest(mouse) {
+      this.isPhoto ? this.signTest(mouse) : this.stampTest(mouse);
+    },
+
+    handleCanvasClick(event) {
+      if (this.isPhoto) {
+        this.signTest(event);
+      } else {
+        this.stampTest(event);
       }
     },
   },

@@ -14,8 +14,9 @@
     <button @click="next()">下一页</button>
     <button @click="clear()">清 空</button>
     <button @click="change()">切 换</button>
-    <button @click="stamp()">盖 章</button>
-    <button @click="sign()">签 字</button>
+    <!-- <button @click="stamp()">盖 章</button>
+    <button @click="sign()">签 字</button> -->
+    <button @click="unionStamp()">统一用印</button>
   </div>
 </template>
 
@@ -116,6 +117,7 @@ export default {
         x: this.point.x,
         y: this.point.y,
         page: this.nowPage,
+        type: "photo",
       });
     },
     sign() {
@@ -181,6 +183,7 @@ export default {
         x: this.point.x,
         y: this.point.y,
         page: this.nowPage,
+        type: "word",
       });
     },
     //获取pdf
@@ -198,7 +201,7 @@ export default {
           this.pdfList = data.data;
           sessionStorage.setItem("pdfList", JSON.stringify(this.pdfList));
           this.fullCanvas();
-        });
+        }); 
     },
     //切换长宽
     change() {
@@ -214,8 +217,21 @@ export default {
         this.getPDf();
       }
     },
-    unionTest(mouse) {
-      this.isPhoto ? this.signTest(mouse) : this.stampTest(mouse);
+    unionStamp() {
+      this.backEndPoint.vertical = this.isVertical;
+      fetch("http://localhost:9000/unionStamp", {
+        method: "post",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(this.backEndPoint),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          //填充图片
+          this.pdfList = data.data;
+          this.fullCanvas();
+        });
     },
 
     handleCanvasClick(event) {
